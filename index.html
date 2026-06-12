@@ -219,6 +219,12 @@ body{font-family:var(--cn); color:var(--ink); -webkit-font-smoothing:antialiased
 .atile .pick{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:var(--teal);color:#fff;display:none;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 .atile.sel .pick{display:flex}
 .alabel{color:#fff;font-weight:800;font-size:15px;text-align:center;line-height:1.25;text-shadow:0 1px 4px rgba(0,0,0,.4);padding:6px;letter-spacing:1px}
+
+/* picked @ reference thumbnail in composer */
+.refchip{position:relative;width:64px;height:80px;border-radius:13px;transform:rotate(-3deg);flex:0 0 auto;box-shadow:0 6px 16px -6px rgba(15,49,50,.4)}
+.refchip .rm{position:absolute;top:-7px;right:-7px;width:21px;height:21px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #fff;box-shadow:0 2px 8px rgba(15,49,50,.35);transition:.15s;z-index:2}
+.refchip .rm:hover{background:#000;transform:scale(1.08)}
+.refchip .rm svg{width:11px;height:11px}
 .alabel.en{font-family:var(--en);font-size:13px;letter-spacing:.5px}
 .a1{background:linear-gradient(150deg,#15171a,#33373c)}.a2{background:linear-gradient(150deg,#c98a2e,#e8b86a)}
 .a3{background:linear-gradient(160deg,#e0613a,#f0a45f)}.a4{background:linear-gradient(150deg,#2a2230,#574a66)}
@@ -454,7 +460,7 @@ body.lowq .send{background:#cfd8d8; box-shadow:none; cursor:not-allowed; transfo
           <div class="box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg><input placeholder="搜索全局资产"></div>
           <button class="as-filter"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5h18M6 12h12M10 19h4"/></svg></button>
         </div>
-        <div class="as-tabs"><button class="as-tab on">图片</button><button class="as-tab">视频</button><button class="as-tab">音频</button><button class="as-tab">文档</button><button class="as-tab">主体</button></div>
+        <div class="as-tabs"><button class="as-tab on">图片</button><button class="as-tab">视频</button><button class="as-tab">音频</button><button class="as-tab">文档</button></div>
       </div>
       <div class="as-grid">
         <div class="atile a1"><span class="alabel">拾光<br>之境</span><span class="pick">✓</span></div>
@@ -601,16 +607,24 @@ body.lowq .send{background:#cfd8d8; box-shadow:none; cursor:not-allowed; transfo
   document.getElementById('atBtn').addEventListener('click',openAssets);
   document.getElementById('asClose').addEventListener('click',()=>assets.classList.remove('open'));
   document.querySelectorAll('.as-tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.as-tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');}));
+  // @ 引用规则：最多 1 个，重选即替换，缩略图右上角可删除
   const refRow=document.getElementById('refRow');
+  let refChip=null;
+  function clearRef(){
+    if(refChip){ refChip.remove(); refChip=null; }
+    document.querySelectorAll('.atile').forEach(x=>x.classList.remove('sel'));
+  }
   document.querySelectorAll('.atile').forEach(t=>t.addEventListener('click',()=>{
     document.querySelectorAll('.atile').forEach(x=>x.classList.remove('sel')); t.classList.add('sel');
-    // insert picked asset as reference thumbnail beside upload, then close
     const cls=[...t.classList].find(c=>/^a\d$/.test(c));
     setTimeout(()=>{
+      if(refChip) refChip.remove();
       const chip=document.createElement('div');
-      chip.style.cssText='width:64px;height:80px;border-radius:13px;transform:rotate(-3deg);flex:0 0 auto;box-shadow:0 6px 16px -6px rgba(15,49,50,.4)';
-      chip.className=cls; 
-      if(refRow.parentNode.querySelectorAll('.'+cls).length<3) refRow.parentNode.insertBefore(chip, refRow.nextSibling);
+      chip.className='refchip '+cls;
+      chip.innerHTML='<span class="rm" title="移除引用"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></span>';
+      chip.querySelector('.rm').addEventListener('click',e=>{ e.stopPropagation(); clearRef(); });
+      refRow.parentNode.insertBefore(chip, refRow.nextSibling);
+      refChip=chip;
       assets.classList.remove('open');
     },180);
   }));
